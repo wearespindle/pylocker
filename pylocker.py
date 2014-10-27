@@ -2,6 +2,7 @@
 
 import cv
 import schedule
+import sys
 import time
 import subprocess
 import argparse
@@ -17,14 +18,14 @@ class PyLocker:
         self.last_movement = time.time()
         self.capture = cv.CaptureFromCAM(-1)
         cv.NamedWindow("PyLocker", 1)
-        schedule.every(1).seconds.do(self.check_lock)
+        schedule.every(0.1).seconds.do(self.check_lock)
 
     def check_lock(self):
         diff_time = time.time() - self.last_movement
-        print 'Idle for: %s seconds' % diff_time
+        sys.stdout.write('Idle for: %.2f seconds \r' % diff_time)
+        sys.stdout.flush()
         if diff_time > self.locktime:
-            print "Lock down!"
-            subprocess.call([self.locker])
+            subprocess.call(self.locker, shell=True)
 
 
     def run(self):
@@ -90,7 +91,6 @@ class PyLocker:
             if self.frame_count >= self.treshold:
                 self.frame_count = 0
                 self.last_movement = time.time()
-                print "Still alive..."
 
             # Listen for ESC key
             c = cv.WaitKey(7) % 0x100
