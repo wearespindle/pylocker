@@ -15,7 +15,6 @@ class PyLocker:
         self.treshold = args.treshold
 
         self.last_movement = time.time()
-        self.state = 'running'
         self.capture = cv.CaptureFromCAM(-1)
         cv.NamedWindow("PyLocker", 1)
         schedule.every(1).seconds.do(self.check_lock)
@@ -24,10 +23,9 @@ class PyLocker:
         diff_time = time.time() - self.last_movement
         print 'Idle for: %s seconds' % diff_time
         if diff_time > self.locktime:
-            if self.state != 'locked':
-                print "LOCK IT!"
-                subprocess.call([self.locker])
-            self.state = 'locked'
+            print "Lock down!"
+            subprocess.call([self.locker])
+
 
     def run(self):
         self.frame_count = 0
