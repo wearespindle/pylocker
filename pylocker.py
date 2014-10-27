@@ -4,29 +4,33 @@ import cv
 import schedule
 import time
 import subprocess
+import argparse
 
 
-class TaardLock:
+class PyLocker:
 
-    def __init__(self):
+    def __init__(self, args):
+        self.locktime = args.locktime
+        self.locker = args.locker
+        self.treshold = args.treshold
+
         self.last_movement = time.time()
         self.state = 'running'
         self.capture = cv.CaptureFromCAM(-1)
-        cv.NamedWindow("Target", 1)
+        cv.NamedWindow("PyLocker", 1)
         schedule.every(1).seconds.do(self.check_lock)
 
     def check_lock(self):
         diff_time = time.time() - self.last_movement
         print 'Idle for: %s seconds' % diff_time
-        if diff_time > 10:
+        if diff_time > self.locktime:
             if self.state != 'locked':
                 print "LOCK IT!"
-                subprocess.call(['i3lock'])
+                subprocess.call([self.locker])
             self.state = 'locked'
 
     def run(self):
-        frame_count = 0
-        frame_limiter = 10
+        self.frame_count = 0
         sms_count = 0
         # Capture first frame to get size
         frame = cv.QueryFrame(self.capture)
@@ -66,7 +70,7 @@ class TaardLock:
             points = []
 
             while contour:
-                frame_count += 1
+                self.frame_count += 1
                 sms_count += 1
                 bound_rect = cv.BoundingRect(list(contour))
                 contour = contour.h_next()
@@ -83,10 +87,10 @@ class TaardLock:
                 cv.Circle(color_image, center_point, 20, cv.CV_RGB(255, 255, 255), 1)
                 cv.Circle(color_image, center_point, 10, cv.CV_RGB(255, 100, 0), 1)
 
-            cv.ShowImage("Target", color_image)
+            cv.ShowImage("PyLocker", color_image)
             #send frame each x frames
-            if frame_count >= frame_limiter:
-                frame_limiter += 10
+            if self.frame_count >= self.treshold:
+                self.frame_count = 0
                 self.last_movement = time.time()
                 print "Still alive..."
 
@@ -96,5 +100,11 @@ class TaardLock:
                 break
 
 if __name__ == "__main__":
-    t = TaardLock()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--locktime', type=int, help='lock time')
+    parser.add_argument('--treshold', type=int, help='movement treshold')
+    parser.add_argument('--locker', type=str, help='screenlocker executable')
+
+    args = parser.parse_args()
+    t = PyLocker(args)
     t.run()
