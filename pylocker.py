@@ -29,10 +29,7 @@ class PyLocker:
         sys.stdout.flush()
         if diff_time > self.locktime:
             if (self.system == 'Darwin'):
-                sys.stdout.write("This is %s and we are locking\n" % self.system)
-                sys.stdout.write("%.2f > %.2f\n" %(diff_time, self.locktime))
-                sys.stdout.flush()
-                #subprocess.call('/System/Library/CoreServices/Menu\ Extras/user.menu/Contents/Resources/CGSession -suspend', shell=True)
+                subprocess.call('/System/Library/CoreServices/Menu\ Extras/user.menu/Contents/Resources/CGSession -suspend', shell=True)
             else:
                 subprocess.call(self.locker, shell=True)
 
@@ -111,7 +108,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--locktime', type=int, default=10, help='lock time')
     parser.add_argument('--treshold', type=int, default=1, help='movement treshold')
-    parser.add_argument('--locker', type=str, default='13lock', help='screenlocker executable')
+    parser.add_argument('--locker', type=str, default='i3lock', help='screenlocker executable')
 
     args = parser.parse_args()
     t = PyLocker(args)
