@@ -6,6 +6,7 @@ import sys
 import time
 import subprocess
 import argparse
+import platform
 
 
 class PyLocker:
@@ -14,18 +15,26 @@ class PyLocker:
         self.locktime = args.locktime
         self.locker = args.locker
         self.treshold = args.treshold
+        self.system = platform.system()
 
         self.last_movement = time.time()
         self.capture = cv.CaptureFromCAM(-1)
         cv.NamedWindow("PyLocker", 1)
         schedule.every(0.1).seconds.do(self.check_lock)
 
+
     def check_lock(self):
         diff_time = time.time() - self.last_movement
         sys.stdout.write('Idle for: %.2f seconds \r' % diff_time)
         sys.stdout.flush()
         if diff_time > self.locktime:
-            subprocess.call(self.locker, shell=True)
+            if (self.system == 'Darwin'):
+                sys.stdout.write("This is %s and we are locking\n" % self.system)
+                sys.stdout.write("%.2f > %.2f\n" %(diff_time, self.locktime))
+                sys.stdout.flush()
+                #subprocess.call('/System/Library/CoreServices/Menu\ Extras/user.menu/Contents/Resources/CGSession -suspend', shell=True)
+            else:
+                subprocess.call(self.locker, shell=True)
 
 
     def run(self):
@@ -49,6 +58,7 @@ class PyLocker:
                 temp = cv.CloneImage(color_image)
                 cv.ConvertScale(color_image, moving_average, 1.0, 0.0)
                 first = False
+                time.sleep(1);
             else:
                 cv.RunningAvg(color_image, moving_average, 0.020, None)
 
@@ -99,9 +109,9 @@ class PyLocker:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--locktime', type=int, help='lock time')
-    parser.add_argument('--treshold', type=int, help='movement treshold')
-    parser.add_argument('--locker', type=str, help='screenlocker executable')
+    parser.add_argument('--locktime', type=int, default=10, help='lock time')
+    parser.add_argument('--treshold', type=int, default=1, help='movement treshold')
+    parser.add_argument('--locker', type=str, default='13lock', help='screenlocker executable')
 
     args = parser.parse_args()
     t = PyLocker(args)
