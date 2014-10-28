@@ -55,7 +55,6 @@ class PyLocker:
                 temp = cv.CloneImage(color_image)
                 cv.ConvertScale(color_image, moving_average, 1.0, 0.0)
                 first = False
-                time.sleep(1);
             else:
                 cv.RunningAvg(color_image, moving_average, 0.020, None)
 
